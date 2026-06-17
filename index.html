@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Subsea Coning Calculator — Blue Gator Subsea</title>
+<style>
+:root {
+  --navy:    #0B1E35;
+  --navy2:   #142840;
+  --steel:   #1E3A52;
+  --teal:    #0D7E6A;
+  --teal2:   #0A9E84;
+  --teal-lt: #E0F5F1;
+  --amber:   #D4861A;
+  --amber-lt:#FEF3E2;
+  --red:     #C0392B;
+  --red-lt:  #FDECEA;
+  --green:   #1A7A4A;
+  --green-lt:#E8F5EE;
+  --blue:    #1565C0;
+  --blue-lt: #E3F0FF;
+  --text:    #0B1E35;
+  --text2:   #3A5068;
+  --text3:   #6B8099;
+  --border:  #C8D8E8;
+  --bg:      #F4F8FB;
+  --surface: #FFFFFF;
+  --radius:  10px;
+  --radius-lg: 14px;
+  font-size: 16px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --navy:    #0D2137;
+    --navy2:   #0A1A2E;
+    --steel:   #163248;
+    --teal:    #0D9E84;
+    --teal2:   #10C0A0;
+    --teal-lt: #0D2E28;
+    --amber:   #E09A30;
+    --amber-lt:#2A1E08;
+    --red:     #E05040;
+    --red-lt:  #2A0E0A;
+    --green:   #1FA060;
+    --green-lt:#082A18;
+    --blue:    #3A8FE0;
+    --blue-lt: #0A1A30;
+    --text:    #D8E8F4;
+    --text2:   #90AAC0;
+    --text3:   #5A7890;
+    --border:  #1E3A52;
+    --bg:      #080F18;
+    --surface: #0D1E30;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Header */
+.app-header {
+  background: var(--navy);
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+}
+.app-header .logo {
+  width: 36px; height: 36px;
+  background: var(--teal2);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0;
+}
+.app-header h1 {
+  font-size: 15px; font-weight: 600;
+  color: #fff; line-height: 1.2;
+}
+.app-header .sub {
+  font-size: 11px; color: rgba(255,255,255,0.5);
+  font-weight: 400;
+}
+
+/* Mode toggle */
+.mode-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: var(--navy2);
+  border-bottom: 1px solid var(--border);
+}
+.mode-btn {
+  padding: 13px 8px;
+  font-size: 13px; font-weight: 600;
+  color: var(--text3);
+  border: none; cursor: pointer;
+  background: transparent;
+  display: flex; align-items: center; justify-content: center;
+  gap: 6px;
+  transition: all 0.15s;
+  border-bottom: 3px solid transparent;
+}
+.mode-btn.active {
+  color: var(--teal2);
+  border-bottom-color: var(--teal2);
+  background: rgba(13,126,106,0.08);
+}
+.mode-btn svg { flex-shrink: 0; }
+
+/* Layout */
+.app-body {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0;
+}
+@media (min-width: 700px) {
+  .app-body { padding: 0 16px; }
+}
+
+/* Sections */
+.section {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 16px;
+}
+@media (min-width: 700px) {
+  .section {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    margin-top: 14px;
+    padding: 20px;
+  }
+}
+.section-title {
+  font-size: 11px; font-weight: 700;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 14px;
+  display: flex; align-items: center; gap: 6px;
+}
+.section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* Grid inputs */
+.input-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.input-grid.cols3 { grid-template-columns: 1fr 1fr 1fr; }
+@media (max-width: 480px) {
+  .input-grid.cols3 { grid-template-columns: 1fr 1fr; }
+}
+
+/* Field */
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field label {
+  font-size: 11px; font-weight: 600;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  line-height: 1.3;
+}
+.field-row { display: flex; gap: 6px; }
+.field-row input { flex: 1; min-width: 0; }
+.field-row select { width: 58px; flex-shrink: 0; }
+.unit-hint {
+  font-size: 11px; color: var(--text3); line-height: 1.3;
+}
+input[type="number"], select {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 15px;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  appearance: none;
+  -webkit-appearance: none;
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.15s;
+}
+input[type="number"]:focus, select:focus {
+  border-color: var(--teal2);
+  background: var(--surface);
+}
+/* Remove spinners on mobile */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button { opacity: 1; }
+
+/* Answer card */
+.answer-card {
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  border: 1.5px solid;
+  margin-bottom: 0;
+}
+.answer-card.ok   { background: var(--green-lt); border-color: var(--green); }
+.answer-card.bad  { background: var(--red-lt);   border-color: var(--red); }
+.answer-card.warn { background: var(--amber-lt); border-color: var(--amber); }
+.ac-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 6px; }
+.answer-card.ok   .ac-label { color: var(--green); }
+.answer-card.bad  .ac-label { color: var(--red); }
+.answer-card.warn .ac-label { color: var(--amber); }
+.ac-question { font-size: 13px; margin-bottom: 10px; line-height: 1.4; }
+.answer-card.ok   .ac-question { color: var(--green); }
+.answer-card.bad  .ac-question { color: var(--red); }
+.answer-card.warn .ac-question { color: var(--amber); }
+.ac-answer { display: flex; align-items: baseline; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+.ac-big { font-size: 42px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+.answer-card.ok   .ac-big { color: var(--green); }
+.answer-card.bad  .ac-big { color: var(--red); }
+.answer-card.warn .ac-big { color: var(--amber); }
+.ac-unit { font-size: 17px; font-weight: 600; }
+.answer-card.ok   .ac-unit { color: var(--green); }
+.answer-card.bad  .ac-unit { color: var(--red); }
+.answer-card.warn .ac-unit { color: var(--amber); }
+.ac-also { font-size: 13px; color: var(--text2); }
+.ac-sub { font-size: 13px; line-height: 1.5; }
+.answer-card.ok   .ac-sub { color: var(--green); }
+.answer-card.bad  .ac-sub { color: var(--red); }
+.answer-card.warn .ac-sub { color: var(--amber); }
+
+/* ROV bar */
+.rov-bar {
+  background: var(--blue-lt);
+  border: 1px solid var(--blue);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  font-size: 13px; color: var(--blue);
+  display: flex; align-items: flex-start; gap: 8px;
+  line-height: 1.4;
+}
+.rov-bar svg { flex-shrink: 0; margin-top: 1px; }
+
+/* Metric cards */
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+@media (max-width: 420px) {
+  .metric-grid { grid-template-columns: 1fr 1fr; }
+}
+.mcard {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+}
+.mcard .mlbl { font-size: 11px; color: var(--text3); line-height: 1.3; margin-bottom: 4px; }
+.mcard .mval { font-size: 19px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+.mcard .msub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.mcard.ok   .mval { color: var(--green); }
+.mcard.bad  .mval { color: var(--red); }
+.mcard.info .mval { color: var(--blue); }
+.mcard.warn .mval { color: var(--amber); }
+.mcard.teal .mval { color: var(--teal2); }
+
+/* Operation sequence */
+.seq { display: flex; flex-direction: column; gap: 0; }
+.seq-item { display: grid; grid-template-columns: 32px 1fr; gap: 10px; }
+.seq-left { display: flex; flex-direction: column; align-items: center; }
+.seq-dot {
+  width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; flex-shrink: 0;
+}
+.seq-dot.navy  { background: var(--navy);  color: #fff; }
+.seq-dot.teal  { background: var(--teal2); color: #fff; }
+.seq-dot.amber { background: var(--amber); color: #fff; }
+.seq-dot.green { background: var(--green); color: #fff; }
+.seq-dot.red   { background: var(--red);   color: #fff; }
+.seq-dot.steel { background: var(--steel); color: #fff; }
+.seq-line { width: 2px; flex: 1; min-height: 10px; background: var(--border); margin: 3px 0; }
+.seq-body { padding-bottom: 16px; padding-top: 4px; }
+.seq-title { font-size: 14px; font-weight: 600; color: var(--text); line-height: 1.3; }
+.seq-detail { font-size: 13px; color: var(--text2); margin-top: 4px; line-height: 1.5; }
+.seq-badge {
+  display: inline-block;
+  background: var(--teal-lt); color: var(--teal);
+  border: 1px solid var(--teal);
+  font-size: 11px; font-weight: 700;
+  padding: 2px 8px; border-radius: 99px;
+  margin-top: 6px;
+}
+.seq-badge.red   { background: var(--red-lt);   color: var(--red);   border-color: var(--red); }
+.seq-badge.amber { background: var(--amber-lt); color: var(--amber); border-color: var(--amber); }
+
+/* Canvas */
+.canvas-wrap {
+  position: relative;
+  width: 100%;
+  background: var(--bg);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+canvas { display: block; width: 100%; }
+
+/* Tab bar */
+.tab-bar {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+.tab {
+  flex: 1;
+  padding: 10px 4px;
+  font-size: 12px; font-weight: 600;
+  color: var(--text3);
+  border: none; cursor: pointer;
+  background: transparent;
+  border-bottom: 2px solid transparent;
+  text-align: center;
+  transition: all 0.15s;
+}
+.tab.active {
+  color: var(--teal2);
+  border-bottom-color: var(--teal2);
+}
+
+/* Timeline table */
+.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+table { width: 100%; border-collapse: collapse; min-width: 520px; font-size: 12px; }
+th {
+  text-align: left; padding: 8px 8px;
+  font-size: 10px; font-weight: 700;
+  color: var(--text3); text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1.5px solid var(--border);
+  white-space: nowrap;
+  background: var(--bg);
+  position: sticky; top: 0;
+}
+td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+tr.breach  td { background: var(--red-lt);   color: var(--red); }
+tr.trigger td { background: var(--green-lt); font-weight: 600; }
+tr.hold    td { background: var(--amber-lt); }
+tr.rovrow  td { background: var(--blue-lt); }
+
+/* Divider gap */
+.gap { height: 14px; background: var(--bg); }
+@media (min-width: 700px) { .gap { display: none; } }
+
+/* Footer */
+.app-footer {
+  text-align: center;
+  padding: 24px 16px;
+  font-size: 11px;
+  color: var(--text3);
+}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="logo">🐊</div>
+  <div>
+    <h1>Subsea Coning Calculator</h1>
+    <div class="sub">Blue Gator Subsea, LLC</div>
+  </div>
+</header>
+
+<div class="mode-toggle">
+  <button class="mode-btn active" id="btn-d" onclick="setMode('deploy')">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="4" x2="12" y2="20"/><polyline points="6 14 12 20 18 14"/></svg>
+    Deploy
+  </button>
+  <button class="mode-btn" id="btn-r" onclick="setMode('recover')">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="4"/><polyline points="6 10 12 4 18 10"/></svg>
+    Recovery
+  </button>
+</div>
+
+<div class="app-body">
+
+<!-- Common params -->
+<div class="section">
+  <div class="section-title">Water column & operations</div>
+  <div class="input-grid cols3">
+    <div class="field">
+      <label>Water Depth</label>
+      <input type="number" id="wd" value="8500" min="100" step="50" inputmode="numeric">
+      <span class="unit-hint">feet</span>
+    </div>
+    <div class="field">
+      <label>SOZ %</label>
+      <input type="number" id="soz" value="30" min="1" max="100" step="1" inputmode="numeric">
+      <span class="unit-hint">% of water depth</span>
+    </div>
+    <div class="field">
+      <label>Crane Speed</label>
+      <input type="number" id="cs" value="0.4" min="0.05" step="0.05" inputmode="decimal">
+      <span class="unit-hint">m/s — fixed limit</span>
+    </div>
+    <div class="field">
+      <label>Vessel Speed</label>
+      <input type="number" id="ts" value="0.3" min="0.05" step="0.05" inputmode="decimal">
+      <span class="unit-hint">knots</span>
+    </div>
+    <div class="field">
+      <label>ROV Threshold</label>
+      <input type="number" id="rov" value="500" min="50" step="50" inputmode="numeric">
+      <span class="unit-hint">ft from seabed</span>
+    </div>
+    <div class="field" style="visibility:hidden" aria-hidden="true"></div>
+  </div>
+</div>
+
+<div class="gap"></div>
+
+<!-- Deploy params -->
+<div class="section" id="deploy-section">
+  <div class="section-title">Deploy parameters</div>
+  <div class="input-grid">
+    <div class="field">
+      <label>Deploy HOB</label>
+      <input type="number" id="hob-d" value="50" min="5" step="5" inputmode="numeric">
+      <span class="unit-hint">ft above seabed</span>
+    </div>
+    <div class="field">
+      <label>Inspection Depth</label>
+      <div class="field-row">
+        <input type="number" id="insp-d" value="100" min="10" step="10" inputmode="numeric">
+        <select id="insp-d-unit"><option value="ft">ft</option><option value="m">m</option></select>
+      </div>
+      <span class="unit-hint" id="insp-d-lbl">below surface</span>
+    </div>
+  </div>
+</div>
+
+<!-- Recovery params -->
+<div class="section" id="recover-section" style="display:none">
+  <div class="section-title">Recovery parameters</div>
+  <div class="input-grid">
+    <div class="field">
+      <label>Recovery HOB</label>
+      <input type="number" id="hob-r" value="75" min="5" step="5" inputmode="numeric">
+      <span class="unit-hint">ft above seabed</span>
+    </div>
+    <div class="field">
+      <label>Bottom Rigging Check</label>
+      <div class="field-row">
+        <input type="number" id="insp-r-bot" value="100" min="10" step="10" inputmode="numeric">
+        <select id="insp-r-bot-unit"><option value="ft">ft</option><option value="m">m</option></select>
+      </div>
+      <span class="unit-hint" id="insp-r-bot-lbl">above seabed</span>
+    </div>
+    <div class="field">
+      <label>Pre-Deck Inspection</label>
+      <div class="field-row">
+        <input type="number" id="insp-r-top" value="100" min="10" step="10" inputmode="numeric">
+        <select id="insp-r-top-unit"><option value="ft">ft</option><option value="m">m</option></select>
+      </div>
+      <span class="unit-hint" id="insp-r-top-lbl">below surface</span>
+    </div>
+    <div class="field" style="visibility:hidden" aria-hidden="true"></div>
+  </div>
+</div>
+
+<div class="gap"></div>
+
+<!-- Results -->
+<div class="section" id="results-section">
+  <div class="section-title">Answer</div>
+  <div id="answer-card" class="answer-card ok" style="margin-bottom:14px">
+    <div class="ac-label" id="ac-label">Deploy</div>
+    <div class="ac-question" id="ac-q">—</div>
+    <div class="ac-answer">
+      <span class="ac-big" id="ac-val">—</span>
+      <span class="ac-unit" id="ac-unit">—</span>
+      <span class="ac-also" id="ac-also"></span>
+    </div>
+    <div class="ac-sub" id="ac-sub">—</div>
+  </div>
+
+  <div class="rov-bar" id="rov-bar">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="2"/><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10"/><path d="M12 6v2M12 16v2M6 12H4M20 12h-2"/></svg>
+    <span id="rov-text">—</span>
+  </div>
+</div>
+
+<div class="gap"></div>
+
+<!-- Supporting metrics -->
+<div class="section">
+  <div class="section-title">Key numbers</div>
+  <div class="metric-grid">
+    <div class="mcard teal">
+      <div class="mlbl">SOZ distance</div>
+      <div class="mval" id="m-soz">—</div>
+      <div class="msub">ft from work site</div>
+    </div>
+    <div class="mcard" id="m2">
+      <div class="mlbl" id="m2l">—</div>
+      <div class="mval" id="m2v">—</div>
+      <div class="msub" id="m2s">—</div>
+    </div>
+    <div class="mcard" id="m3">
+      <div class="mlbl" id="m3l">—</div>
+      <div class="mval" id="m3v">—</div>
+      <div class="msub" id="m3s">—</div>
+    </div>
+  </div>
+</div>
+
+<div class="gap"></div>
+
+<!-- Operation sequence -->
+<div class="section">
+  <div class="section-title">Operation sequence</div>
+  <div class="seq" id="seq"></div>
+</div>
+
+<div class="gap"></div>
+
+<!-- Diagram + table -->
+<div class="section">
+  <div class="tab-bar">
+    <button class="tab active" onclick="showTab('diagram')">Cone diagram</button>
+    <button class="tab" onclick="showTab('table')">Timeline table</button>
+  </div>
+
+  <div id="tab-diagram">
+    <div class="canvas-wrap">
+      <canvas id="cone-canvas"></canvas>
+    </div>
+    <p style="font-size:11px;color:var(--text3);margin-top:8px;line-height:1.5" id="diag-note">—</p>
+  </div>
+
+  <div id="tab-table" style="display:none">
+    <div class="table-scroll">
+      <table><thead id="th"></thead><tbody id="tb"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<div class="app-footer">Blue Gator Subsea, LLC · Subsea Coning Calculator</div>
+
+</div><!-- app-body -->
+
+<script>
+const $ = id => document.getElementById(id);
+const k2f = k => k * 1.68781;
+const m2f = v => v * 3.28084;
+function toFt(val, unit) { return unit === 'm' ? val * 3.28084 : val; }
+
+let mode = 'deploy';
+
+function setMode(m) {
+  mode = m;
+  $('btn-d').className = 'mode-btn' + (m==='deploy'  ? ' active' : '');
+  $('btn-r').className = 'mode-btn' + (m==='recover' ? ' active' : '');
+  $('deploy-section').style.display  = m==='deploy'  ? '' : 'none';
+  $('recover-section').style.display = m==='recover' ? '' : 'none';
+  calc();
+}
+
+function setAC(cls, label, q, val, unit, also, sub) {
+  const ac = $('answer-card');
+  ac.className = 'answer-card ' + cls;
+  $('ac-label').textContent = label;
+  $('ac-q').textContent     = q;
+  $('ac-val').textContent   = val;
+  $('ac-unit').textContent  = unit;
+  $('ac-also').textContent  = also || '';
+  $('ac-sub').textContent   = sub;
+}
+
+function setM(num, lbl, val, sub, cls) {
+  $('m'+num).className = 'mcard ' + cls;
+  $('m'+num+'l').textContent = lbl;
+  $('m'+num+'v').textContent = val;
+  $('m'+num+'s').textContent = sub;
+}
+
+function buildSeq(steps) {
+  $('seq').innerHTML = steps.map((s,i) => {
+    const isLast = i === steps.length-1;
+    const badge  = s.badge ? `<div class="seq-badge ${s.badgeCls||''}">${s.badge}</div>` : '';
+    return `<div class="seq-item">
+      <div class="seq-left">
+        <div class="seq-dot ${s.dot}">${i+1}</div>
+        ${isLast ? '' : '<div class="seq-line"></div>'}
+      </div>
+      <div class="seq-body">
+        <div class="seq-title">${s.title}</div>
+        <div class="seq-detail">${s.detail}</div>
+        ${badge}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function calc() {
+  const WD      = parseFloat($('wd').value)  || 8500;
+  const SOZ_pct = parseFloat($('soz').value) / 100 || 0.30;
+  const CS_ms   = parseFloat($('cs').value)  || 0.4;
+  const TS_kts  = parseFloat($('ts').value)  || 0.3;
+  const rovFt   = parseFloat($('rov').value) || 500;
+
+  const sozDist  = WD * SOZ_pct;
+  const cs_fps   = m2f(CS_ms);
+  const ts_fps   = k2f(TS_kts);
+  const rovDepth = WD - rovFt;
+
+  $('m-soz').textContent = sozDist.toFixed(0) + ' ft';
+  $('rov-text').textContent = `Continuous ROV monitoring required when load is within ${rovFt} ft of seabed (≥ ${rovDepth.toFixed(0)} ft depth).`;
+
+  if (mode === 'deploy') {
+    const hobD     = parseFloat($('hob-d').value) || 50;
+    const inspD_ft = toFt(parseFloat($('insp-d').value)||100, $('insp-d-unit').value);
+    $('insp-d-lbl').textContent = $('insp-d-unit').value==='m' ? 'meters below surface' : 'ft below surface';
+    calcDeploy(WD, SOZ_pct, hobD, cs_fps, CS_ms, ts_fps, TS_kts, sozDist, rovDepth, rovFt, inspD_ft);
+  } else {
+    const hobR       = parseFloat($('hob-r').value) || 75;
+    const inspBot_ft = toFt(parseFloat($('insp-r-bot').value)||100, $('insp-r-bot-unit').value);
+    const inspTop_ft = toFt(parseFloat($('insp-r-top').value)||100, $('insp-r-top-unit').value);
+    $('insp-r-bot-lbl').textContent = $('insp-r-bot-unit').value==='m' ? 'meters above seabed' : 'ft above seabed';
+    $('insp-r-top-lbl').textContent = $('insp-r-top-unit').value==='m' ? 'meters below surface' : 'ft below surface';
+    calcRecover(WD, SOZ_pct, hobR, cs_fps, CS_ms, ts_fps, TS_kts, sozDist, rovDepth, rovFt, inspBot_ft, inspTop_ft);
+  }
+}
+
+function calcDeploy(WD, SOZ_pct, HOB, cs_fps, CS_ms, ts_fps, TS_kts, sozDist, rovDepth, rovFt, inspDepth_ft) {
+  const T_transit = sozDist / ts_fps;
+  const slope     = (ts_fps / SOZ_pct) - cs_fps;
+  let trigDepth   = slope <= 0
+    ? WD - sozDist / SOZ_pct
+    : WD - sozDist/SOZ_pct + T_transit*(ts_fps/SOZ_pct - cs_fps);
+  trigDepth = Math.max(trigDepth, inspDepth_ft);
+  trigDepth = Math.max(0, Math.min(trigDepth, WD - HOB - 1));
+
+  const dt = 10;
+  let breach = false, minClear = Infinity;
+  const rows = [];
+
+  for (let t=0; t<=inspDepth_ft/cs_fps; t+=dt) {
+    const d = Math.min(inspDepth_ft, cs_fps*t);
+    rows.push({t, phase:'Lowering', depth:d, dist:sozDist, hobRem:WD-d,
+      minSep:(WD-d)*SOZ_pct, clear:sozDist-(WD-d)*SOZ_pct, rov:d>=rovDepth, ok:true});
+  }
+  rows.push({t:inspDepth_ft/cs_fps, phase:'INSP. HOLD', depth:inspDepth_ft,
+    dist:sozDist, hobRem:WD-inspDepth_ft, minSep:(WD-inspDepth_ft)*SOZ_pct,
+    clear:sozDist-(WD-inspDepth_ft)*SOZ_pct, rov:inspDepth_ft>=rovDepth, ok:true, isHold:true});
+
+  if (trigDepth > inspDepth_ft) {
+    const extraTime=(trigDepth-inspDepth_ft)/cs_fps, t0=inspDepth_ft/cs_fps;
+    for (let t=dt; t<=extraTime; t+=dt) {
+      const d=Math.min(trigDepth, inspDepth_ft+cs_fps*t);
+      rows.push({t:t0+t, phase:'To trigger', depth:d, dist:sozDist,
+        hobRem:WD-d, minSep:(WD-d)*SOZ_pct, clear:sozDist-(WD-d)*SOZ_pct,
+        rov:d>=rovDepth, ok:true});
+    }
+  }
+  const tTrig = trigDepth/cs_fps;
+  rows.push({t:tTrig, phase:'TRANSIT START', depth:trigDepth, dist:sozDist,
+    hobRem:WD-trigDepth, minSep:(WD-trigDepth)*SOZ_pct,
+    clear:sozDist-(WD-trigDepth)*SOZ_pct, rov:trigDepth>=rovDepth, ok:true, isTrigger:true});
+
+  for (let t=dt; t<=T_transit+dt; t+=dt) {
+    const dist  = Math.max(0, sozDist-ts_fps*t);
+    const depth = Math.min(WD-HOB, trigDepth+cs_fps*t);
+    const hobRem= WD-depth, minSep=hobRem*SOZ_pct, clear=dist-minSep;
+    if (clear<minClear) minClear=clear;
+    if (clear<-1) breach=true;
+    rows.push({t:tTrig+t, phase:'Transit', depth, dist, hobRem, minSep,
+      clear, rov:depth>=rovDepth, ok:clear>=-1, isBreach:clear<-1});
+  }
+
+  const ok  = !breach;
+  const cls = ok ? 'ok' : 'bad';
+  const transitMin = T_transit/60;
+
+  setAC(cls, 'Deploy — trigger depth',
+    `At ${TS_kts} kts vessel speed with ${CS_ms} m/s crane speed, vessel may begin transit when load reaches:`,
+    trigDepth.toFixed(0), 'ft',
+    `(${(trigDepth*0.3048).toFixed(0)} m)`,
+    ok
+      ? `${(trigDepth/WD*100).toFixed(1)}% of water depth · ${(WD-trigDepth-HOB).toFixed(0)} ft above HOB · Min clearance ${minClear.toFixed(0)} ft · Transit ${transitMin.toFixed(1)} min`
+      : `Cone breach — reduce vessel speed or increase crane speed.`
+  );
+  setM(2, 'Trigger depth (meters)', (trigDepth*0.3048).toFixed(0)+' m', `= ${trigDepth.toFixed(0)} ft`, ok?'ok':'bad');
+  setM(3, 'Transit time', transitMin.toFixed(1)+' min', `Load drops ${(cs_fps*T_transit).toFixed(0)} ft`, 'info');
+
+  buildSeq([
+    { dot:'navy',  title:`Deploy from SOZ — crane at ${CS_ms} m/s`,
+      detail:`Vessel holds at SOZ (${sozDist.toFixed(0)} ft from work site). Load descends from surface.` },
+    { dot:'amber', title:`Rigging inspection at ${inspDepth_ft.toFixed(0)} ft`,
+      detail:`Crane stops. Rigging confirmed by ROV or visual. Vessel stationary.` },
+    { dot:'steel', title:`Crane resumes — lowers to trigger depth`,
+      detail:`Load continues to ${trigDepth.toFixed(0)} ft before vessel moves.` },
+    { dot:'teal',  title:`Vessel begins transit at ${trigDepth.toFixed(0)} ft load depth`,
+      detail:`Bridge sets ${TS_kts} kts toward work site. Crane continues simultaneously at ${CS_ms} m/s.`,
+      badge: '◀ TRIGGER POINT', badgeCls: ok?'':'red' },
+    { dot: ok?'green':'red', title:`Arrival at work site`,
+      detail: ok
+        ? `After ${transitMin.toFixed(1)} min, load reaches HOB (${HOB} ft above seabed) as vessel arrives. Cone clearance maintained.`
+        : `⛔ Cone breach — adjust parameters.` },
+  ]);
+
+  $('diag-note').textContent = 'Teal line = lowering. Green dot = trigger point. Blue diagonal = transit path. Red dashed = cone boundary. Blue band = ROV monitoring zone.';
+  drawCone({WD,SOZ_pct,sozDist,HOB,rovDepth,rows,breach,mode:'deploy',trigDepth,inspDepth:inspDepth_ft});
+  drawTable(rows);
+}
+
+function calcRecover(WD, SOZ_pct, HOB, cs_fps, CS_ms, ts_fps, TS_kts, sozDist, rovDepth, rovFt, inspBot_ft, inspTop_ft) {
+  const bottomCheckDepth = WD - inspBot_ft;
+  const triggerDist      = inspBot_ft * SOZ_pct;
+  const triggerTime      = triggerDist / ts_fps;
+  const postSlope        = ts_fps - cs_fps * SOZ_pct;
+  const craneOk          = postSlope >= -0.01;
+  const totalTime        = sozDist / ts_fps;
+  const transitMin       = totalTime / 60;
+
+  const dt = 10;
+  let breach=false, minClear=Infinity;
+  const rows=[];
+
+  for (let t=0; t<=triggerTime; t+=dt) {
+    const dist=ts_fps*t, depth=bottomCheckDepth, hobRem=inspBot_ft;
+    const minSep=hobRem*SOZ_pct, clear=dist-minSep;
+    rows.push({t, phase:'Vessel moving', depth, dist, hobRem, minSep, clear, rov:depth>=rovDepth, ok:clear>=-1});
+  }
+  rows.push({t:triggerTime, phase:'CRANE START', depth:bottomCheckDepth,
+    dist:triggerDist, hobRem:inspBot_ft, minSep:triggerDist,
+    clear:0, rov:bottomCheckDepth>=rovDepth, ok:true, isTrigger:true});
+
+  const T_after = totalTime-triggerTime;
+  for (let t=dt; t<=T_after+dt; t+=dt) {
+    const dist  = Math.min(sozDist, triggerDist+ts_fps*t);
+    const depth = Math.max(inspTop_ft, bottomCheckDepth-cs_fps*t);
+    const hobRem= WD-depth, minSep=hobRem*SOZ_pct, clear=dist-minSep;
+    if (clear<minClear) minClear=clear;
+    if (clear<-1) breach=true;
+    rows.push({t:triggerTime+t, phase:'Transit+recover', depth, dist, hobRem, minSep,
+      clear, rov:depth>=rovDepth, ok:clear>=-1, isBreach:clear<-1});
+  }
+  rows.push({t:totalTime+dt, phase:'PRE-DECK HOLD', depth:inspTop_ft,
+    dist:sozDist, hobRem:WD-inspTop_ft, minSep:(WD-inspTop_ft)*SOZ_pct,
+    clear:sozDist-(WD-inspTop_ft)*SOZ_pct, rov:inspTop_ft>=rovDepth, ok:true, isHold:true});
+
+  const ok  = !breach && craneOk;
+  const cls = !craneOk ? 'warn' : ok ? 'ok' : 'bad';
+
+  setAC(cls, 'Recovery — crane trigger distance',
+    `At ${TS_kts} kts vessel speed, crane may begin recovering at ${CS_ms} m/s when vessel has traveled:`,
+    triggerDist.toFixed(0), 'ft from work site',
+    `(${(triggerDist*0.3048).toFixed(0)} m)`,
+    ok
+      ? `${(triggerDist/sozDist*100).toFixed(1)}% of SOZ distance · Min clearance ${minClear.toFixed(0)} ft · Total transit ${transitMin.toFixed(1)} min`
+      : !craneOk
+      ? `⚠ Crane recovers faster than cone opens at ${TS_kts} kts — reduce crane speed or increase vessel speed.`
+      : `Cone breach — adjust parameters.`
+  );
+  setM(2, 'Bottom check depth', bottomCheckDepth.toFixed(0)+' ft', `${inspBot_ft} ft above seabed`, 'info');
+  setM(3, 'Pre-deck inspection', inspTop_ft.toFixed(0)+' ft depth', `${(inspTop_ft*0.3048).toFixed(0)} m — crane holds`, 'info');
+
+  buildSeq([
+    { dot:'navy',  title:`Lift off bottom to HOB (${HOB} ft above seabed)`,
+      detail:`Load confirmed stable. Vessel at work site.` },
+    { dot:'amber', title:`Bottom rigging check at ${inspBot_ft} ft above seabed`,
+      detail:`Crane holds at ${bottomCheckDepth.toFixed(0)} ft depth. ROV confirms rigging. Vessel stationary.` },
+    { dot:'steel', title:`Vessel begins transit toward SOZ at ${TS_kts} kts`,
+      detail:`Crane holds — does NOT recover yet. Load stays at ${bottomCheckDepth.toFixed(0)} ft depth.` },
+    { dot:'teal',  title:`Crane begins recovery after ${triggerDist.toFixed(0)} ft vessel travel`,
+      detail:`Vessel is ${triggerDist.toFixed(0)} ft from work site. Crane begins recovering at ${CS_ms} m/s.`,
+      badge:'◀ TRIGGER POINT', badgeCls: ok?'':'red' },
+    { dot:'amber', title:`Pre-deck rigging inspection at ${inspTop_ft} ft depth`,
+      detail:`Crane stops ${inspTop_ft} ft below surface. Rigging confirmed before load comes to deck.` },
+    { dot:'green', title:`Load recovered to deck at SOZ`,
+      detail:`Crane resumes. Load brought to deck. Recovery complete.` },
+  ]);
+
+  $('diag-note').textContent = 'Teal = vessel moving / crane holding. Green dot = crane trigger. Blue diagonal = transit + recovery path. Red dashed = cone boundary. Blue band = ROV zone.';
+  drawCone({WD,SOZ_pct,sozDist,HOB,rovDepth,rows,breach:!ok,mode:'recover',
+    triggerDist,bottomCheckDepth,inspTop_ft});
+  drawTable(rows);
+}
+
+function drawCone({WD,SOZ_pct,sozDist,HOB,rovDepth,rows,breach,mode,
+  trigDepth,inspDepth,triggerDist,bottomCheckDepth,inspTop_ft}) {
+  const canvas = $('cone-canvas');
+  const dpr    = window.devicePixelRatio || 1;
+  const rect   = canvas.parentElement.getBoundingClientRect();
+  const W      = rect.width || 340;
+  const H      = Math.max(220, Math.min(320, W * 0.55));
+  canvas.width  = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.height = H + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const dark  = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const textC = dark ? '#90AAC0' : '#3A5068';
+  const pL=48, pR=12, pT=22, pB=30;
+  const w=W-pL-pR, h=H-pT-pB;
+  ctx.clearRect(0,0,W,H);
+
+  const xS = x => pL+(x/sozDist)*w;
+  const yS = y => pT+(y/WD)*h;
+
+  // Grid
+  ctx.strokeStyle = dark?'rgba(255,255,255,0.04)':'rgba(0,0,0,0.04)';
+  ctx.lineWidth=0.5;
+  [.25,.5,.75].forEach(f=>{ctx.beginPath();ctx.moveTo(pL,yS(f*WD));ctx.lineTo(pL+w,yS(f*WD));ctx.stroke();});
+
+  // ROV zone
+  ctx.fillStyle = dark?'rgba(21,101,192,0.15)':'rgba(21,101,192,0.08)';
+  ctx.fillRect(pL,yS(rovDepth),w,yS(WD)-yS(rovDepth));
+
+  // Cone exclusion
+  ctx.beginPath();ctx.moveTo(xS(0),yS(WD));ctx.lineTo(xS(sozDist),yS(0));ctx.lineTo(xS(0),yS(0));ctx.closePath();
+  ctx.fillStyle=dark?'rgba(192,57,43,0.15)':'rgba(192,57,43,0.10)';ctx.fill();
+
+  // Safe zone
+  ctx.beginPath();ctx.moveTo(xS(0),yS(WD));ctx.lineTo(xS(sozDist),yS(0));ctx.lineTo(xS(sozDist),yS(WD));ctx.closePath();
+  ctx.fillStyle=dark?'rgba(13,126,106,0.08)':'rgba(13,126,106,0.05)';ctx.fill();
+
+  // Cone boundary
+  ctx.beginPath();ctx.moveTo(xS(0),yS(WD));ctx.lineTo(xS(sozDist),yS(0));
+  ctx.strokeStyle='#C0392B';ctx.lineWidth=1.5;ctx.setLineDash([5,4]);ctx.stroke();ctx.setLineDash([]);
+
+  // Seabed
+  ctx.beginPath();ctx.moveTo(pL,yS(WD));ctx.lineTo(pL+w,yS(WD));
+  ctx.strokeStyle=dark?'rgba(255,255,255,0.25)':'rgba(11,30,53,0.25)';ctx.lineWidth=2;ctx.stroke();
+
+  // HOB line
+  const hobDepth = mode==='deploy'
+    ? WD-(parseFloat($('hob-d').value)||50)
+    : WD-(parseFloat($('hob-r').value)||75);
+  ctx.beginPath();ctx.moveTo(pL,yS(hobDepth));ctx.lineTo(pL+w,yS(hobDepth));
+  ctx.strokeStyle='#D4861A';ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.stroke();ctx.setLineDash([]);
+
+  const fs = Math.max(9, Math.min(11, W/60));
+  ctx.font=`${fs}px -apple-system,system-ui,sans-serif`;
+
+  if (mode==='deploy') {
+    // Insp depth line
+    ctx.beginPath();ctx.moveTo(pL,yS(inspDepth));ctx.lineTo(pL+w,yS(inspDepth));
+    ctx.strokeStyle='#D4861A';ctx.lineWidth=0.8;ctx.setLineDash([3,2]);ctx.stroke();ctx.setLineDash([]);
+
+    // Lowering (teal vertical)
+    ctx.beginPath();ctx.moveTo(xS(sozDist),yS(0));
+    rows.filter(r=>r.phase==='Lowering'||r.phase==='To trigger').forEach(r=>ctx.lineTo(xS(sozDist),yS(r.depth)));
+    ctx.strokeStyle='#0D9E84';ctx.lineWidth=2;ctx.stroke();
+
+    // Trigger dot
+    ctx.beginPath();ctx.arc(xS(sozDist),yS(trigDepth),5,0,Math.PI*2);
+    ctx.fillStyle='#1A7A4A';ctx.fill();
+
+    // Transit path
+    const tR=rows.filter(r=>r.phase==='Transit');
+    if(tR.length>1){
+      ctx.beginPath();ctx.moveTo(xS(sozDist),yS(trigDepth));
+      tR.forEach(r=>ctx.lineTo(xS(r.dist),yS(r.depth)));
+      ctx.strokeStyle=breach?'#C0392B':'#1565C0';ctx.lineWidth=2;ctx.stroke();
+    }
+    if(tR.length){
+      const last=tR[tR.length-1];
+      ctx.beginPath();ctx.arc(xS(0),yS(last.depth),4,0,Math.PI*2);
+      ctx.fillStyle='#1565C0';ctx.fill();
+    }
+    ctx.fillStyle='#1A7A4A';ctx.textAlign='left';
+    if(yS(trigDepth)-10>pT+10) ctx.fillText(`▶ ${trigDepth.toFixed(0)} ft`,xS(sozDist)+5,yS(trigDepth)-5);
+    else ctx.fillText(`▶ ${trigDepth.toFixed(0)} ft`,xS(sozDist)+5,yS(trigDepth)+12);
+
+  } else {
+    // Recovery
+    ctx.beginPath();ctx.moveTo(pL,yS(inspTop_ft));ctx.lineTo(pL+w,yS(inspTop_ft));
+    ctx.strokeStyle='#D4861A';ctx.lineWidth=0.8;ctx.setLineDash([3,2]);ctx.stroke();ctx.setLineDash([]);
+    ctx.beginPath();ctx.moveTo(pL,yS(bottomCheckDepth));ctx.lineTo(pL+w,yS(bottomCheckDepth));
+    ctx.strokeStyle='#D4861A';ctx.lineWidth=0.8;ctx.setLineDash([2,2]);ctx.stroke();ctx.setLineDash([]);
+
+    // Phase A horizontal
+    ctx.beginPath();ctx.moveTo(xS(0),yS(bottomCheckDepth));ctx.lineTo(xS(triggerDist),yS(bottomCheckDepth));
+    ctx.strokeStyle='#0D9E84';ctx.lineWidth=2;ctx.stroke();
+
+    // Start dot
+    ctx.beginPath();ctx.arc(xS(0),yS(bottomCheckDepth),4,0,Math.PI*2);
+    ctx.fillStyle='#D4861A';ctx.fill();
+
+    // Trigger dot
+    ctx.beginPath();ctx.arc(xS(triggerDist),yS(bottomCheckDepth),5,0,Math.PI*2);
+    ctx.fillStyle='#1A7A4A';ctx.fill();
+
+    // Phase B diagonal
+    const bR=rows.filter(r=>r.phase==='Transit+recover');
+    if(bR.length>1){
+      ctx.beginPath();ctx.moveTo(xS(triggerDist),yS(bottomCheckDepth));
+      bR.forEach(r=>ctx.lineTo(xS(Math.min(sozDist,r.dist)),yS(r.depth)));
+      ctx.strokeStyle=breach?'#C0392B':'#1565C0';ctx.lineWidth=2;ctx.stroke();
+    }
+    if(bR.length){
+      const last=bR[bR.length-1];
+      ctx.beginPath();ctx.arc(xS(sozDist),yS(last.depth),4,0,Math.PI*2);
+      ctx.fillStyle='#1565C0';ctx.fill();
+    }
+    ctx.fillStyle='#1A7A4A';ctx.textAlign='left';
+    if(xS(triggerDist)+5+60 < pL+w)
+      ctx.fillText(`▶ ${triggerDist.toFixed(0)} ft`,xS(triggerDist)+5,yS(bottomCheckDepth)-5);
+  }
+
+  // Axes
+  ctx.strokeStyle=dark?'rgba(255,255,255,0.1)':'rgba(11,30,53,0.12)';ctx.lineWidth=0.5;
+  ctx.beginPath();ctx.moveTo(pL,pT);ctx.lineTo(pL,pT+h);ctx.lineTo(pL+w,pT+h);ctx.stroke();
+
+  ctx.fillStyle=textC;ctx.textAlign='right';
+  [0,.25,.5,.75,1].forEach(f=>ctx.fillText((f*WD/1000).toFixed(1)+'k',pL-3,yS(f*WD)+4));
+  ctx.textAlign='center';
+  const xTicks = W<400 ? [0,.5,1] : [0,.25,.5,.75,1];
+  xTicks.forEach(f=>ctx.fillText(Math.round(f*sozDist),xS(f*sozDist),pT+h+14));
+  ctx.save();ctx.translate(10,pT+h/2);ctx.rotate(-Math.PI/2);
+  ctx.textAlign='center';ctx.fillText('Depth (kft)',0,0);ctx.restore();
+  ctx.textAlign='center';ctx.fillText('Horiz. distance from work site (ft)',pL+w/2,pT+h+26);
+
+  // ROV label
+  ctx.fillStyle=dark?'#3A8FE0':'#1565C0';ctx.textAlign='left';
+  if(yS(rovDepth)+12 < pT+h-10) ctx.fillText('ROV zone',pL+3,yS(rovDepth)+11);
+
+  // Work site / SOZ labels
+  ctx.fillStyle=textC;ctx.textAlign='right';
+  ctx.fillText('WS',xS(0)+14,pT+h-4);
+  ctx.textAlign='left';
+  ctx.fillText('SOZ',xS(sozDist)-28,pT+12);
+}
+
+function drawTable(rows) {
+  $('th').innerHTML=`<tr>
+    <th>Time (min)</th><th>Phase</th><th>Depth (ft)</th>
+    <th>Dist (ft)</th><th>HOB rem (ft)</th>
+    <th>Min sep (ft)</th><th>Clear (ft)</th><th>ROV</th><th>Status</th>
+  </tr>`;
+  const filtered=rows.filter((_,i)=>i%2===0);
+  $('tb').innerHTML=filtered.map(r=>{
+    const rc=r.isBreach?'breach':r.isTrigger?'trigger':r.isHold?'hold':r.rov&&(r.phase.includes('Transit')||r.phase.includes('recover'))?'rovrow':'';
+    return`<tr class="${rc}">
+      <td>${(r.t/60).toFixed(1)}</td><td>${r.phase}</td>
+      <td>${r.depth.toFixed(0)}</td><td>${r.dist.toFixed(0)}</td>
+      <td>${r.hobRem.toFixed(0)}</td><td>${r.minSep.toFixed(0)}</td>
+      <td>${r.clear.toFixed(0)}</td>
+      <td>${r.rov?'⚠ Yes':'No'}</td>
+      <td>${r.isBreach?'⛔ BREACH':r.isTrigger?'▶ TRIGGER':r.isHold?'🔍 HOLD':'✓'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function showTab(name){
+  ['diagram','table'].forEach(t=>$('tab-'+t).style.display=t===name?'':'none');
+  document.querySelectorAll('.tab').forEach((b,i)=>
+    b.className='tab'+(['diagram','table'][i]===name?' active':''));
+  if(name==='diagram') setTimeout(()=>calc(),50);
+}
+
+// Recalc on resize for canvas
+let resizeTimer;
+window.addEventListener('resize',()=>{
+  clearTimeout(resizeTimer);
+  resizeTimer=setTimeout(calc,150);
+});
+
+document.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',calc));
+calc();
+</script>
+</body>
+</html>
